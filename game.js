@@ -36,75 +36,43 @@ function Player() {
 	this.arrows = 5;
 }
 
-// Player state
-let currentRoom = getRandomRoom();
-let arrows = 5;
-let gameOver = false;
-
-// Connect rooms randomly
-for (let i = 0; i < NUM_ROOMS; i++) {
-	const room = cave.rooms[i];
-	const numConnections = Math.floor(Math.random() * 3) + 2;
-
-	while (room.connectedRooms.length < numConnections) {
-		const randomIndex = Math.floor(Math.random() * NUM_ROOMS);
-		const randomRoom = cave.rooms[randomIndex];
-
-		if (
-			randomRoom.id !== room.id &&
-			!room.connectedRooms.includes(randomRoom)
-		) {
-			room.connectedRooms.push(randomRoom);
-			randomRoom.connectedRooms.push(room);
-		}
-	}
-}
-
 // Set player's starting position
 cave.player = new Player();
-const randomIndex = Math.floor(Math.random() * NUM_ROOMS);
-cave.player.currentRoom = cave.rooms[randomIndex];
+cave.player.currentRoom = cave.rooms[Math.floor(Math.random() * NUM_ROOMS)];
 cave.player.currentRoom.hasPlayer = true;
 
 // Place Wumpus
-const wumpusIndex = Math.floor(Math.random() * NUM_ROOMS);
-cave.wumpus = cave.rooms[wumpusIndex];
+cave.wumpus = cave.rooms[Math.floor(Math.random() * NUM_ROOMS)];
 cave.wumpus.hasWumpus = true;
 
 // Place pits
 for (let i = 0; i < NUM_PITS; i++) {
-	const pitIndex = Math.floor(Math.random() * NUM_ROOMS);
-	const pitRoom = cave.rooms[pitIndex];
-
-	if (
-		!pitRoom.isPit &&
-		!pitRoom.hasWumpus &&
-		!pitRoom.hasBats &&
-		!pitRoom.hasPlayer
+	let pitRoom = cave.rooms[Math.floor(Math.random() * NUM_ROOMS)];
+	while (
+		pitRoom.isPit ||
+		pitRoom.hasWumpus ||
+		pitRoom.hasBats ||
+		pitRoom.hasPlayer
 	) {
-		pitRoom.isPit = true;
-		cave.pits.push(pitRoom);
-	} else {
-		i--;
+		pitRoom = cave.rooms[Math.floor(Math.random() * NUM_ROOMS)];
 	}
+	pitRoom.isPit = true;
+	cave.pits.push(pitRoom);
 }
 
 // Place bats
 for (let i = 0; i < NUM_BATS; i++) {
-	const batsIndex = Math.floor(Math.random() * NUM_ROOMS);
-	const batsRoom = cave.rooms[batsIndex];
-
-	if (
-		!batsRoom.isPit &&
-		!batsRoom.hasWumpus &&
-		!batsRoom.hasBats &&
-		!batsRoom.hasPlayer
+	let batsRoom = cave.rooms[Math.floor(Math.random() * NUM_ROOMS)];
+	while (
+		batsRoom.isPit ||
+		batsRoom.hasWumpus ||
+		batsRoom.hasBats ||
+		batsRoom.hasPlayer
 	) {
-		batsRoom.hasBats = true;
-		cave.bats.push(batsRoom);
-	} else {
-		i--;
+		batsRoom = cave.rooms[Math.floor(Math.random() * NUM_ROOMS)];
 	}
+	batsRoom.hasBats = true;
+	cave.bats.push(batsRoom);
 }
 
 // Helper functions
@@ -118,36 +86,6 @@ function getRandomRooms(num, exclude = []) {
 		rooms.add(getRandomRoom());
 	}
 	return Array.from(rooms);
-}
-
-function getAdjacentRooms(room) {
-	const adjacents = {
-		1: [2, 5, 8],
-		2: [1, 3, 10],
-		3: [2, 4, 12],
-		4: [3, 5, 14],
-		5: [1, 4, 6],
-		6: [5, 7, 15],
-		7: [6, 8, 17],
-		8: [1, 7, 11],
-		9: [10, 12, 18],
-		10: [2, 9, 11],
-		11: [8, 10, 20],
-		12: [3, 9, 13],
-		13: [12, 14, 19],
-		14: [4, 13, 15],
-		15: [6, 14, 16],
-		16: [15, 17, 19],
-		17: [7, 16, 18],
-		18: [9, 17, 20],
-		19: [13, 16, 20],
-		20: [11, 18, 19],
-	};
-	return adjacents[room] || [];
-}
-
-function isAdjacent(room1, room2) {
-	return getAdjacentRooms(room1).includes(room2);
 }
 
 const board = createBoard(5, 5);
@@ -166,167 +104,66 @@ let arrows = 5;
 // Loop until the game is over
 let gameOver = false;
 while (!gameOver) {
-	// Print the board and player status
-	console.log("Current board:");
-	printBoard(board, playerPosition);
-	console.log(`Arrows left: ${arrows}`);
+	// Print the board and player positions
+	printBoard(board, playerPosition, wumpusPosition);
 
-	// Get the player's action
-	const action = prompt(
-		"What would you like to do? (m)ove, (s)hoot, or (q)uit"
-	);
+	// Get the player's move
+	let move = prompt("Enter your move (shoot or move):");
 
-	// Handle the player's action
-	switch (action) {
-		case "m":
-			// Move the player
-			const direction = prompt(
-				"Which direction? (u)p, (d)own, (l)eft, or (r)ight"
-			);
-			const newPosition = movePlayer(board, playerPosition, direction);
-			if (newPosition === wumpusPosition) {
-				// The player has walked into the wumpus!
-				console.log("You have been eaten by the wumpus!");
-				gameOver = true;
-			} else if (board[newPosition[0]][newPosition[1]] === "P") {
-				// The player has fallen into a pit!
-				console.log("You fell into a pit!");
-				gameOver = true;
-			} else if (board[newPosition[0]][newPosition[1]] === "B") {
-				// The player has encountered bats!
-				console.log("You hear the flapping of bat wings...");
-				playerPosition = placeRandomly(board);
-			} else {
-				playerPosition = newPosition;
-			}
-			break;
+	// Handle the player's move
+	if (move === "shoot") {
+		// Get the room the arrow was shot into
+		let shotRoom = getShotRoom(board, playerPosition, wumpusPosition);
+		// Decrement the number of arrows
+		arrows--;
 
-		case "s":
-			// Shoot an arrow
-			const shotDirection = prompt(
-				"Which direction? (u)p, (d)own, (l)eft, or (r)ight"
-			);
-			arrows--;
-			const hit = shootArrow(
-				board,
-				playerPosition,
-				shotDirection,
-				wumpusPosition
-			);
-			if (hit) {
-				console.log("You hit the wumpus! Congratulations!");
-				gameOver = true;
-			} else if (arrows === 0) {
-				console.log("You have run out of arrows. Game over.");
-				gameOver = true;
-			}
-			break;
-
-		case "q":
-			// Quit the game
-			console.log("Thanks for playing!");
+		// Check if the arrow hit the wumpus
+		if (shotRoom === wumpusPosition) {
+			alert("You killed the wumpus! You win!");
 			gameOver = true;
-			break;
-
-		default:
-			console.log("Invalid action.");
-			break;
-	}
-}
-
-function updateGame() {
-	let message = "";
-	while (true) {
-		// Print current room and connected rooms
-		const currentRoom = cave.player.currentRoom;
-		console.log(`You are in room ${currentRoom.id}`);
-		console.log(
-			`Tunnels lead to rooms ${currentRoom.connectedRooms
-				.map((room) => room.id)
-				.join(", ")}`
-		);
-
-		// Check for hazards
-		if (PIT_ROOMS.includes(currentRoom)) {
-			message += "You fell into a pit!\n";
-			gameOver = true;
-		} else if (BAT_ROOMS.includes(currentRoom)) {
-			message += "You were carried away by bats!\n";
-			currentRoom = getRandomRoom();
-		}
-
-		// Check for Wumpus
-		if (isAdjacent(currentRoom, WUMPUS_ROOM)) {
-			message += "You smell a Wumpus nearby!\n";
-		} else if (currentRoom === WUMPUS_ROOM) {
-			message += "You were eaten by the Wumpus!\n";
-			gameOver = true;
-		}
-
-		// Update message if no hazards or Wumpus
-		if (!message) {
-			message += `You are in room ${currentRoom}\n`;
-		}
-
-		// Check for arrows
-		if (arrows > 0) {
-			message += `You have ${arrows} arrows left.\n`;
 		} else {
-			message += "You are out of arrows!\n";
+			alert("You missed the wumpus! It's moved to a new room.");
+			wumpusPosition = moveRandomly(board, wumpusPosition);
 		}
+	} else if (move === "move") {
+		// Get the player's desired move direction
+		let direction = prompt("Enter a direction (up, down, left, or right):");
+		// Move the player
+		let newPosition = movePlayer(board, playerPosition, direction);
 
-		// Print message to console
-		console.log(message);
-
-		// Check for game over
-		if (gameOver) {
-			console.log("Game over!");
-		}
-	}
-}
-
-// Play the game
-console.log("Welcome to Hunt the Wumpus!");
-
-while (!gameOver) {
-	updateGame();
-
-	// Get user input
-	let input = prompt(
-		"Enter a room to move to (1-" + NUM_ROOMS + ') or "shoot" to fire an arrow:'
-	);
-
-	// Process user input
-	if (input === "shoot") {
-		if (arrows > 0) {
-			arrows--;
-			let target = prompt("Enter a room to shoot at:");
-			if (target == WUMPUS_ROOM) {
-				console.log("You killed the Wumpus! Congratulations!");
-				gameOver = true;
-			} else {
-				console.log("You missed!");
-				// Move the Wumpus
-				let newRoom = getRandomRoom();
-				while (newRoom === currentRoom || newRoom === WUMPUS_ROOM) {
-					newRoom = getRandomRoom();
-				}
-				WUMPUS_ROOM = newRoom;
-				updateGame();
-			}
-		} else {
-			console.log("You are out of arrows!");
-		}
-	} else {
-		let newRoom = parseInt(input);
-		if (
-			newRoom >= 1 &&
-			newRoom <= NUM_ROOMS &&
-			isAdjacent(currentRoom, newRoom)
+		// Check if the player hit a pit or the wumpus
+		if (board[newPosition.row][newPosition.col] === "P") {
+			alert("You fell into a pit! Game over!");
+			gameOver = true;
+		} else if (
+			newPosition.row === wumpusPosition.row &&
+			newPosition.col === wumpusPosition.col
 		) {
-			currentRoom = newRoom;
+			alert("You walked into the wumpus! Game over!");
+			gameOver = true;
 		} else {
-			console.log("Invalid move!");
+			// Update the player's position
+			board[playerPosition.row][playerPosition.col] = ".";
+			board[newPosition.row][newPosition.col] = "P";
+			playerPosition = newPosition;
+
+			// Move the wumpus
+			wumpusPosition = moveRandomly(board, wumpusPosition);
+
+			// Check if the player hit a bat
+			if (board[newPosition.row][newPosition.col] === "B") {
+				alert("You were picked up by a bat and moved to a new room.");
+				playerPosition = placeRandomly(board);
+			}
+
+			// Decrement the number of arrows
+			arrows--;
+
+			// Check if the player ran out of arrows
+			if (arrows === 0) {
+				alert("You ran out of arrows! Game over!");
+				gameOver = true;
+			}
 		}
 	}
 }
