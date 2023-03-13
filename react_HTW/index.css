@@ -1,0 +1,98 @@
+body {
+	background-color: #000;
+}
+
+.app {
+	background-color: #0077be;
+	padding: 20px;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.game-over {
+	margin-top: 20px;
+	color: #fff;
+	font-size: 24px;
+}
+
+.board {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+	margin-top: 20px;
+}
+
+.room {
+	width: 50px;
+	height: 50px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: #fff;
+	border: 1px solid #000;
+	font-size: 14px;
+	color: #000;
+}
+
+.player {
+	color: #f00;
+	font-size: 24px;
+}
+
+.status {
+	margin-top: 20px;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+}
+
+.status-item {
+	margin-right: 20px;
+	font-size: 16px;
+	color: #fff;
+}
+
+.modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.modal-content {
+	background-color: #fff;
+	padding: 20px;
+	border-radius: 5px;
+	text-align: center;
+}
+
+.modal-header {
+	font-size: 24px;
+	color: #f00;
+	margin-bottom: 10px;
+}
+
+.modal-body {
+	font-size: 18px;
+	margin-bottom: 20px;
+}
+
+.modal-button {
+	background-color: #f00;
+	color: #fff;
+	border: none;
+	padding: 10px 20px;
+	border-radius: 5px;
+	font-size: 16px;
+	cursor: pointer;
+}
